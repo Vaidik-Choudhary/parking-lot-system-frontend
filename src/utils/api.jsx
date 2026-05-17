@@ -4,7 +4,7 @@
 //  Change GATEWAY_URL to match your gateway port
 // =====================================================
 
-export const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || '';
+export const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || 'http://localhost:8080';
 
 // ── Token helpers ─────────────────────────────────────
 export const getToken    = () => localStorage.getItem('accessToken');
