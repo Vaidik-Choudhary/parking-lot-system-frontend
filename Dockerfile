@@ -1,5 +1,7 @@
 # Step 1: Build the React Application
 FROM node:20-alpine AS build
+ARG VITE_GATEWAY_URL=""
+ENV VITE_GATEWAY_URL=$VITE_GATEWAY_URL
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
