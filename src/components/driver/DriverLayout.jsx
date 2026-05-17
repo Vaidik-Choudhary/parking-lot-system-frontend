@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '../common/Sidebar';
 import { Topbar } from '../common/UI';
 import { api } from '../../utils/api';
+import { IconHome, IconSearch, IconBooking, IconCar, IconReceipt, IconBell, IconUser, IconHelp, IconCalendar, IconPayment } from '../common/Icons';
 
 export default function DriverLayout({ title, children, topbarRight }) {
   const [mobileOpen, setMobileOpen]     = useState(false);
@@ -20,12 +21,16 @@ export default function DriverLayout({ title, children, topbarRight }) {
   }, []);
 
   const DRIVER_NAV = [
-    { icon: '🏠', label: 'Dashboard',      path: '/driver',                  exact: true },
-    { icon: '🔍', label: 'Find Parking',   path: '/driver/search'            },
-    { icon: '📋', label: 'My Bookings',    path: '/driver/bookings'          },
-    { icon: '🚗', label: 'My Vehicles',    path: '/driver/vehicles'          },
-    { icon: '🧾', label: 'My Receipts',    path: '/driver/receipts'          },
-    { icon: '🔔', label: 'Notifications',  path: '/driver/notifications', badge: unreadCount },
+    { icon: <IconHome size={18} />,    label: 'Dashboard',      path: '/driver',                  exact: true },
+    { icon: <IconSearch size={18} />,  label: 'Find Parking',   path: '/driver/search'            },
+    { icon: <IconCalendar size={18} />, label: 'Spot Block',     path: '/driver/spot-block'        },
+    { icon: <IconBooking size={18} />, label: 'My Bookings',    path: '/driver/bookings'          },
+    { icon: <IconPayment size={18} />, label: 'My Bills',       path: '/driver/bills'             },
+    { icon: <IconCar size={18} />,     label: 'My Vehicles',    path: '/driver/vehicles'          },
+    { icon: <IconReceipt size={18} />, label: 'My Receipts',    path: '/driver/receipts'          },
+    { icon: <IconBell size={18} />,    label: 'Notifications',  path: '/driver/notifications', badge: unreadCount },
+    { icon: <IconUser size={18} />,    label: 'Profile',        path: '/driver/profile'           },
+    { icon: <IconHelp size={18} />,    label: 'Help & Support', path: '/driver/help'              },
   ];
 
   return (

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { api, saveAuth } from '../../utils/api';
 import { Alert } from '../../components/common/UI';
+import { IconParking } from '../../components/common/Icons';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -32,7 +33,7 @@ export default function RegisterPage() {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-logo">
-          <h1>🅿 ParkEase</h1>
+          <h1><IconParking size={32} style={{ verticalAlign: '-6px', marginRight: 8 }} /> ParkEase</h1>
           <p>Create your account</p>
         </div>
 

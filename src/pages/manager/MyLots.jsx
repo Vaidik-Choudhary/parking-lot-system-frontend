@@ -2,12 +2,18 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ManagerLayout from '../../components/manager/ManagerLayout';
 import { Spinner, Modal, Alert, EmptyState, StatusBadge } from '../../components/common/UI';
+import { IconBuilding, IconMap, IconCheckCircle, IconClock, IconParking, IconEdit, IconBooking, IconChart, IconHandicap, IconEV, IconMotorbike, IconCar, IconTruck } from '../../components/common/Icons';
 import { api } from '../../utils/api';
 
 const EMPTY_FORM = {
   name: '', address: '', city: '',
   latitude: '', longitude: '',
-  totalSpots: '', openTime: '08:00', closeTime: '22:00', imageUrl: ''
+  totalSpots: '', openTime: '08:00', closeTime: '22:00', imageUrl: '',
+  isHandicappedFriendly: false,
+  hasEV: false,
+  hasTwoWheeler: false,
+  hasFourWheeler: false,
+  hasHeavy: false
 };
 
 export default function MyLots() {
@@ -38,7 +44,12 @@ const load = () => {
       totalSpots: lot.totalSpots,
       openTime: lot.openTime || '08:00',
       closeTime: lot.closeTime || '22:00',
-      imageUrl: lot.imageUrl || ''
+      imageUrl: lot.imageUrl || '',
+      isHandicappedFriendly: !!lot.isHandicappedFriendly,
+      hasEV: !!lot.hasEV,
+      hasTwoWheeler: !!lot.hasTwoWheeler,
+      hasFourWheeler: !!lot.hasFourWheeler,
+      hasHeavy: !!lot.hasHeavy
     });
     setShowModal(true);
   };
@@ -71,7 +82,10 @@ const load = () => {
     }
   };
 
-  const handle = e => setForm({ ...form, [e.target.name]: e.target.value });
+  const handle = e => {
+    const v = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    setForm({ ...form, [e.target.name]: v });
+  };
 
   return (
     <ManagerLayout title="My Parking Lots"
@@ -90,7 +104,7 @@ const load = () => {
       {success && <Alert type="success" onClose={() => setSuccess('')}>{success}</Alert>}
 
       {loading ? <Spinner /> : lots.length === 0 ? (
-        <EmptyState icon="🏢" title="No lots registered"
+        <EmptyState icon={<IconBuilding size={48} />} title="No lots registered"
           message="Register your first parking facility to get started."
           action={<button className="btn btn-primary" onClick={openAdd}>Register Lot</button>}
         />
@@ -103,18 +117,19 @@ const load = () => {
                 <div>
                   <h3>{lot.name}</h3>
                   <p style={{ fontSize: '0.8rem', marginTop: 2 }}>
-                    📍 {lot.address}, {lot.city}
+                    <IconMap size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> {lot.address}, {lot.city}
                   </p>
                 </div>
                 <span className={`badge ${lot.approved ? 'badge-success' : 'badge-warning'}`}>
-                  {lot.approved ? '✓ Approved' : '⏳ Pending'}
+                  {lot.approved ? <><IconCheckCircle size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Approved</> : <><IconClock size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Pending</>}
                 </span>
+                {lot.isHandicappedFriendly && <span className="badge badge-info" style={{ marginLeft: 8 }}><IconHandicap size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Handicapped Friendly</span>}
               </div>
 
               {/* Stats row */}
               <div style={{ display: 'flex', gap: 16, marginBottom: 16, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                <span>🅿 {lot.availableSpots}/{lot.totalSpots} spots</span>
-                <span>🕐 {lot.openTime} – {lot.closeTime}</span>
+                <span><IconParking size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> {lot.availableSpots}/{lot.totalSpots} spots</span>
+                <span><IconClock size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> {lot.openTime} – {lot.closeTime}</span>
               </div>
 
               {/* Status toggle */}
@@ -137,13 +152,13 @@ const load = () => {
 
               {/* Actions */}
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', borderTop: '1px solid var(--border-light)', paddingTop: 12 }}>
-                <button className="btn btn-secondary btn-sm" onClick={() => openEdit(lot)}>✏️ Edit</button>
+                <button className="btn btn-secondary btn-sm" onClick={() => openEdit(lot)}><IconEdit size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Edit</button>
                 <button className="btn btn-secondary btn-sm"
-                  onClick={() => navigate(`/manager/lots/${lot.lotId}/spots`)}>🅿 Spots</button>
+                  onClick={() => navigate(`/manager/lots/${lot.lotId}/spots`)}><IconParking size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Spots</button>
                 <button className="btn btn-secondary btn-sm"
-                  onClick={() => navigate(`/manager/lots/${lot.lotId}/bookings`)}>📋 Bookings</button>
+                  onClick={() => navigate(`/manager/lots/${lot.lotId}/bookings`)}><IconBooking size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Bookings</button>
                 <button className="btn btn-secondary btn-sm"
-                  onClick={() => navigate(`/manager/lots/${lot.lotId}/analytics`)}>📊 Analytics</button>
+                  onClick={() => navigate(`/manager/lots/${lot.lotId}/analytics`)}><IconChart size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Analytics</button>
               </div>
             </div>
           ))}
@@ -213,6 +228,29 @@ const load = () => {
           <label className="form-label">Image URL (optional)</label>
           <input className="form-control" name="imageUrl" placeholder="https://..."
             value={form.imageUrl} onChange={handle} />
+        </div>
+        
+        <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <label className="checkbox-container">
+            <input type="checkbox" name="isHandicappedFriendly" checked={form.isHandicappedFriendly} onChange={handle} />
+            <span className="checkbox-label" style={{ marginLeft: 8 }}><IconHandicap size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Handicapped Friendly</span>
+          </label>
+          <label className="checkbox-container">
+            <input type="checkbox" name="hasEV" checked={form.hasEV} onChange={handle} />
+            <span className="checkbox-label" style={{ marginLeft: 8 }}><IconEV size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> EV Standard Support</span>
+          </label>
+          <label className="checkbox-container">
+            <input type="checkbox" name="hasTwoWheeler" checked={form.hasTwoWheeler} onChange={handle} />
+            <span className="checkbox-label" style={{ marginLeft: 8 }}><IconMotorbike size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Two-Wheeler Parking</span>
+          </label>
+          <label className="checkbox-container">
+            <input type="checkbox" name="hasFourWheeler" checked={form.hasFourWheeler} onChange={handle} />
+            <span className="checkbox-label" style={{ marginLeft: 8 }}><IconCar size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Four-Wheeler Parking</span>
+          </label>
+          <label className="checkbox-container">
+            <input type="checkbox" name="hasHeavy" checked={form.hasHeavy} onChange={handle} />
+            <span className="checkbox-label" style={{ marginLeft: 8 }}><IconTruck size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Heavy Vehicle Support</span>
+          </label>
         </div>
       </Modal>
     </ManagerLayout>

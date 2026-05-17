@@ -2,50 +2,81 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import DriverLayout from '../../components/driver/DriverLayout';
 import { Spinner, Alert } from '../../components/common/UI';
+import { IconCheckCircle, IconArrowLeft, IconPayment, IconShield, IconCalendar, IconBooking } from '../../components/common/Icons';
 import { api } from '../../utils/api';
 
 export default function PaymentPage() {
-  const { bookingId } = useParams();
+  const { bookingId, subscriptionId } = useParams();
   const navigate      = useNavigate();
 
-  const [booking, setBooking]         = useState(null);
-  const [payment, setPayment]         = useState(null);  // FIX: check existing payment
+  const [data, setData]               = useState(null); // Either booking or subscription info
+  const [payment, setPayment]         = useState(null);
   const [loading, setLoading]         = useState(true);
   const [paying, setPaying]           = useState(false);
   const [error, setError]             = useState('');
 
-  useEffect(() => {
-    // Load booking AND check if it's already been paid
-    Promise.all([
-      api.get(`/api/bookings/${bookingId}`),
-      // Check payment status — returns 404 if no payment yet, so we catch that
-      api.get(`/api/payments/booking/${bookingId}`).catch(() => null),
-    ])
-      .then(([b, p]) => { setBooking(b); setPayment(p); })
-      .catch(err => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [bookingId]);
+  const isSub = !!subscriptionId;
 
-  // Already paid — redirect back
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        if (isSub) {
+          // For subscriptions, we fetch the payment record directly to get the amount
+          // because subscription object doesn't store the pro-rated final amount in a simple way
+          const payments = await api.get('/api/payments/my');
+          const subPayment = payments.find(p => p.subscriptionId === Number(subscriptionId) && p.status !== 'PAID');
+          
+          if (!subPayment) throw new Error("Subscription bill not found or already paid.");
+          
+          setData({
+            id: subPayment.subscriptionId,
+            amount: subPayment.amount,
+            description: subPayment.description || `Monthly Subscription #${subscriptionId}`,
+            type: 'SUBSCRIPTION'
+          });
+          setPayment(subPayment);
+        } else {
+          const [b, p] = await Promise.all([
+            api.get(`/api/bookings/${bookingId}`),
+            api.get(`/api/payments/booking/${bookingId}`).catch(() => null),
+          ]);
+          setData({
+            id: b.bookingId,
+            amount: b.totalAmount,
+            description: `Parking Booking #${bookingId}`,
+            type: 'BOOKING',
+            details: b
+          });
+          setPayment(p);
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [bookingId, subscriptionId]);
+
   const alreadyPaid = payment?.status === 'PAID';
 
   const handlePay = async () => {
     setPaying(true); setError('');
     try {
-      // Step 1: Create Razorpay order
       const order = await api.post('/api/payments/order', {
-        bookingId: Number(bookingId),
-        amount: booking.totalAmount,
-        description: `Parking Booking #${bookingId}`,
+        bookingId: isSub ? null : Number(bookingId),
+        subscriptionId: isSub ? Number(subscriptionId) : null,
+        amount: data.amount,
+        description: data.description,
       });
 
-      // Step 2: Open Razorpay checkout UI
       const options = {
         key:      order.razorpayKeyId,
         amount:   order.amount * 100,
         currency: 'INR',
         name:     'ParkEase',
-        description: `Parking Booking #${bookingId}`,
+        description: data.description,
         order_id: order.razorpayOrderId,
 
         handler: async (response) => {
@@ -55,10 +86,8 @@ export default function PaymentPage() {
               razorpayPaymentId: response.razorpay_payment_id,
               razorpaySignature: response.razorpay_signature,
             });
-            // FIX: navigate back to bookings with success message
-            // MyBookings will re-fetch on navigation and Pay button will be gone
-            navigate('/driver/bookings', {
-              state: { success: '✅ Payment successful! Your receipt will be emailed to you.' }
+            navigate(isSub ? '/driver/bills' : '/driver/bookings', {
+              state: { success: 'Payment successful! Your receipt is now available in My Receipts.' }
             });
           } catch (err) {
             setError('Payment verification failed: ' + err.message);
@@ -67,14 +96,11 @@ export default function PaymentPage() {
 
         prefill: { name: '', email: localStorage.getItem('email') || '' },
         theme: { color: '#2563eb' },
-        modal: {
-          ondismiss: () => setPaying(false)
-        }
+        modal: { ondismiss: () => setPaying(false) }
       };
 
       if (!window.Razorpay) await loadRazorpayScript();
-      const rzp = new window.Razorpay(options);
-      rzp.open();
+      new window.Razorpay(options).open();
 
     } catch (err) {
       setError(err.message);
@@ -91,44 +117,21 @@ export default function PaymentPage() {
 
   if (loading) return <DriverLayout title="Payment"><Spinner /></DriverLayout>;
 
-  // If already paid — show receipt info instead of payment button
   if (alreadyPaid) {
     return (
-      <DriverLayout title="Payment Receipt"
-        topbarRight={
-          <button className="btn btn-secondary btn-sm" onClick={() => navigate('/driver/bookings')}>
-            ← My Bookings
-          </button>
-        }
-      >
-        <div className="page-header">
-          <h1>Payment Complete ✅</h1>
-          <p>This booking has already been paid.</p>
-        </div>
-        <div className="card" style={{ maxWidth: 480 }}>
-          <div style={{ textAlign: 'center', padding: '20px 0' }}>
-            <div style={{ fontSize: '3rem', marginBottom: 12 }}>✅</div>
-            <h3>Booking #{bookingId} is paid</h3>
-            <p style={{ marginTop: 8 }}>Amount: <strong>₹{booking?.totalAmount}</strong></p>
-            <p style={{ marginTop: 4, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              Transaction ID: {payment?.razorpayPaymentId || '—'}
-            </p>
-          </div>
-          <button className="btn btn-primary btn-block mt-3"
-            onClick={() => navigate('/driver/bookings')}>
-            Back to My Bookings
-          </button>
+      <DriverLayout title="Payment Receipt">
+        <div className="page-header text-center">
+          <div className="mb-3 text-success"><IconCheckCircle size={64} /></div>
+          <h1>Payment Complete</h1>
+          <p>This bill has already been settled.</p>
+          <button className="btn btn-primary mt-4" onClick={() => navigate('/driver/receipts')}>View All Receipts</button>
         </div>
       </DriverLayout>
     );
   }
 
   return (
-    <DriverLayout title="Complete Payment"
-      topbarRight={
-        <button className="btn btn-secondary btn-sm" onClick={() => navigate(-1)}>← Back</button>
-      }
-    >
+    <DriverLayout title="Complete Payment">
       <div className="page-header">
         <h1>Complete Your Payment</h1>
         <p>Pay securely via Razorpay (Card, UPI, Net Banking)</p>
@@ -136,43 +139,60 @@ export default function PaymentPage() {
 
       {error && <Alert type="danger" onClose={() => setError('')}>{error}</Alert>}
 
-      <div className="card" style={{ maxWidth: 480 }}>
-        <h3 className="mb-4">Booking Summary</h3>
-
-        {[
-          ['Booking ID',  `#${booking?.bookingId}`],
-          ['Spot',        `#${booking?.spotId}`],
-          ['Vehicle',     booking?.vehiclePlate],
-          ['Check-in',    booking?.checkInTime ? new Date(booking.checkInTime).toLocaleString() : '—'],
-          ['Check-out',   booking?.checkOutTime ? new Date(booking.checkOutTime).toLocaleString() : '—'],
-        ].map(([label, value]) => (
-          <div key={label} className="flex-between"
-            style={{ padding: '10px 0', borderBottom: '1px solid var(--border-light)' }}>
-            <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>{label}</span>
-            <span style={{ fontWeight: 500 }}>{value}</span>
+      <div className="card shadow-sm mx-auto" style={{ maxWidth: 500 }}>
+        <div className="card-body">
+          <div className="d-flex align-items-center mb-4">
+            <div className={`p-3 rounded-circle mr-3 ${isSub ? 'bg-info-soft text-info' : 'bg-primary-soft text-primary'}`}>
+              {isSub ? <IconCalendar size={24} /> : <IconBooking size={24} />}
+            </div>
+            <div>
+              <h3 className="m-0">{isSub ? 'Subscription Bill' : 'Booking Bill'}</h3>
+              <p className="text-muted m-0">Reference: #{data.id}</p>
+            </div>
           </div>
-        ))}
 
-        <div className="flex-between mt-3"
-          style={{ padding: '16px 0', borderTop: '2px solid var(--border)' }}>
-          <span style={{ fontWeight: 600, fontSize: '1rem' }}>Total Amount</span>
-          <span style={{ fontWeight: 700, fontSize: '1.5rem', color: 'var(--primary)' }}>
-            ₹{booking?.totalAmount}
-          </span>
+          <div className="border-top border-bottom py-3 mb-4">
+            <div className="d-flex justify-content-between mb-2">
+              <span className="text-muted">Description</span>
+              <span className="font-weight-bold">{data.description}</span>
+            </div>
+            {data.type === 'BOOKING' && (
+              <>
+                <div className="d-flex justify-content-between mb-2">
+                  <span className="text-muted">Spot ID</span>
+                  <span>#{data.details.spotId}</span>
+                </div>
+                <div className="d-flex justify-content-between mb-2">
+                  <span className="text-muted">Vehicle</span>
+                  <span>{data.details.vehiclePlate}</span>
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <span className="h5 m-0 font-weight-bold">Total Amount</span>
+            <span className="h2 m-0 font-weight-bold text-primary">₹{data.amount}</span>
+          </div>
+
+          <button
+            className="btn btn-primary btn-block btn-lg shadow-sm"
+            onClick={handlePay}
+            disabled={paying}
+          >
+            {paying ? 'Processing...' : <><IconPayment size={18} className="mr-2" /> Pay ₹{data.amount} via Razorpay</>}
+          </button>
+
+          <div className="text-center mt-4 text-muted small">
+            <IconShield size={12} className="mr-1" /> Secure encrypted payment powered by Razorpay
+          </div>
         </div>
-
-        <button
-          className="btn btn-primary btn-block btn-lg mt-3"
-          onClick={handlePay}
-          disabled={paying}
-        >
-          {paying ? 'Processing...' : `💳 Pay ₹${booking?.totalAmount} via Razorpay`}
-        </button>
-
-        <p className="text-center mt-3" style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-          🔒 Secured by Razorpay. Your payment info is never stored on our servers.
-        </p>
       </div>
+
+      <style>{`
+        .bg-info-soft { background: rgba(var(--info-rgb), 0.1); }
+        .bg-primary-soft { background: rgba(var(--primary-rgb), 0.1); }
+      `}</style>
     </DriverLayout>
   );
 }

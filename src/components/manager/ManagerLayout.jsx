@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
 import Sidebar from '../common/Sidebar';
 import { Topbar } from '../common/UI';
+import { IconHome, IconBuilding, IconUser, IconHelp, IconCalendar, IconBell } from '../common/Icons';
 
 const MANAGER_NAV = [
-  { icon: '🏠', label: 'Dashboard',  path: '/manager',      exact: true },
-  { icon: '🏢', label: 'My Lots',    path: '/manager/lots'  },
+  { icon: <IconHome size={18} />,     label: 'Dashboard',  path: '/manager',      exact: true },
+  { icon: <IconBuilding size={18} />, label: 'My Lots',    path: '/manager/lots'  },
+  { icon: <IconCalendar size={18} />, label: 'Subscription Requests', path: '/manager/subscriptions' },
+  { icon: <IconBell size={18} />,     label: 'Notifications',       path: '/manager/notifications' },
+  { icon: <IconUser size={18} />,     label: 'Profile',    path: '/manager/profile' },
+  { icon: <IconHelp size={18} />,     label: 'Help & Support', path: '/manager/help' },
 ];
 
 export default function ManagerLayout({ title, children, topbarRight }) {

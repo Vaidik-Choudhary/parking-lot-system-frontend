@@ -1,19 +1,23 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { clearAuth, getUserName, getEmail, getRole } from '../../utils/api';
+import { IconParking, IconCar, IconBuilding, IconSettings, IconLogout, IconX, IconSun, IconMoon } from './Icons';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function Sidebar({ navItems, title, onMenuToggle, mobileOpen }) {
   const navigate  = useNavigate();
+  const { theme, toggleTheme } = useTheme();
   const name      = getUserName() || 'User';
   const email     = getEmail() || '';
   const role      = getRole() || '';
   const initials  = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
-  const roleLabel = {
-    DRIVER:      '🚗 Driver',
-    LOT_MANAGER: '🏢 Lot Manager',
-    ADMIN:       '⚙️ Admin',
-  }[role] || role;
+  const roleConfig = {
+    DRIVER:      { icon: <IconCar size={14} />, label: 'Driver' },
+    LOT_MANAGER: { icon: <IconBuilding size={14} />, label: 'Lot Manager' },
+    ADMIN:       { icon: <IconSettings size={14} />, label: 'Admin' },
+  };
+  const { icon: roleIcon, label: roleLabel } = roleConfig[role] || { icon: null, label: role };
 
   const handleLogout = () => {
     clearAuth();
@@ -30,10 +34,10 @@ export default function Sidebar({ navItems, title, onMenuToggle, mobileOpen }) {
       <aside className={`sidebar ${mobileOpen ? 'sidebar-open' : ''}`}>
         {/* Logo */}
         <div className="sidebar-logo">
-          <h2>🅿 ParkEase</h2>
+          <h2><IconParking size={22} style={{ verticalAlign: 'middle', marginRight: 6 }} /> ParkEase</h2>
           <span>Smart Parking Platform</span>
           {/* Mobile close button */}
-          <button className="sidebar-close-btn" onClick={onMenuToggle} aria-label="Close menu">✕</button>
+          <button className="sidebar-close-btn" onClick={onMenuToggle} aria-label="Close menu"><IconX size={20} /></button>
         </div>
 
         {/* Navigation */}
@@ -62,15 +66,25 @@ export default function Sidebar({ navItems, title, onMenuToggle, mobileOpen }) {
             <div className="sidebar-avatar">{initials}</div>
             <div className="sidebar-user-info">
               <div className="sidebar-user-name">{name}</div>
-              <div className="sidebar-user-role">{roleLabel}</div>
+              <div className="sidebar-user-role">{roleIcon} {roleLabel}</div>
             </div>
-            <button
-              className="sidebar-logout"
-              onClick={handleLogout}
-              title="Logout"
-            >
-              ↩
-            </button>
+            <div style={{ display: 'flex', gap: 4 }}>
+              <button
+                className="sidebar-logout"
+                onClick={toggleTheme}
+                title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+                style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', padding: '4px' }}
+              >
+                {theme === 'light' ? <IconMoon size={16} /> : <IconSun size={16} />}
+              </button>
+              <button
+                className="sidebar-logout"
+                onClick={handleLogout}
+                title="Logout"
+              >
+                <IconLogout size={16} />
+              </button>
+            </div>
           </div>
         </div>
       </aside>

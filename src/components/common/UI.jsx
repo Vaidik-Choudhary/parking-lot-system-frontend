@@ -1,4 +1,5 @@
 import React from 'react';
+import { IconHourglass, IconCheckCircle, IconCheck, IconX, IconWrench, IconCircleDot, IconRefresh, IconClock, IconTag } from './Icons';
 
 /* ── Topbar ──────────────────────────────────────────── */
 export function Topbar({ title, children, onMenuToggle }) {
@@ -23,7 +24,7 @@ export function Modal({ isOpen, onClose, title, children, footer }) {
       <div className="modal" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h3 className="modal-title">{title}</h3>
-          <button className="modal-close" onClick={onClose}>✕</button>
+          <button className="modal-close" onClick={onClose}><IconX size={18} /></button>
         </div>
         {children}
         {footer && <div className="modal-footer">{footer}</div>}
@@ -51,35 +52,52 @@ export function Alert({ type = 'info', children, onClose }) {
           onClick={onClose}
           style={{ marginLeft: 'auto', background: 'none', border: 'none',
                    cursor: 'pointer', fontSize: '1rem', opacity: 0.6 }}
-        >✕</button>
+        ><IconX size={16} /></button>
       )}
     </div>
   );
 }
 
+/* ── Card ────────────────────────────────────────────── */
+export function Card({ children, className = '', style = {} }) {
+  return (
+    <div className={`card ${className}`} style={style}>
+      {children}
+    </div>
+  );
+}
+
 /* ── Status Badge ────────────────────────────────────── */
-export function StatusBadge({ status }) {
+const badgeIcon = (IconComp, size = 12) => <IconComp size={size} style={{ verticalAlign: '-2px', marginRight: 4 }} />;
+
+export function StatusBadge({ status, type, children }) {
   const config = {
-    RESERVED:   { cls: 'badge-warning',  label: '⏳ Reserved'  },
-    ACTIVE:     { cls: 'badge-success',  label: '✅ Active'    },
-    COMPLETED:  { cls: 'badge-primary',  label: '✔ Completed' },
-    CANCELLED:  { cls: 'badge-danger',   label: '✕ Cancelled' },
-    PENDING:    { cls: 'badge-warning',  label: '⏳ Pending'   },
-    PAID:       { cls: 'badge-success',  label: '✅ Paid'      },
-    REFUNDED:   { cls: 'badge-info',     label: '↩ Refunded'  },
-    FAILED:     { cls: 'badge-danger',   label: '✕ Failed'    },
-    AVAILABLE:  { cls: 'badge-success',  label: '✓ Available' },
-    OCCUPIED:   { cls: 'badge-danger',   label: '● Occupied'  },
-    MAINTENANCE:{ cls: 'badge-muted',    label: '🔧 Maintenance'},
-    true:       { cls: 'badge-success',  label: '✓ Active'   },
-    false:      { cls: 'badge-danger',   label: '✕ Inactive' },
+    RESERVED:   { cls: 'badge-warning',  icon: badgeIcon(IconHourglass),  label: 'Reserved'    },
+    ACTIVE:     { cls: 'badge-success',  icon: badgeIcon(IconCheckCircle), label: 'Active'     },
+    COMPLETED:  { cls: 'badge-primary',  icon: badgeIcon(IconCheck),       label: 'Completed'  },
+    CANCELLED:  { cls: 'badge-danger',   icon: badgeIcon(IconX),           label: 'Cancelled'  },
+    PENDING:    { cls: 'badge-warning',  icon: badgeIcon(IconHourglass),  label: 'Pending'     },
+    PAID:       { cls: 'badge-success',  icon: badgeIcon(IconCheckCircle), label: 'Paid'       },
+    REFUNDED:   { cls: 'badge-info',     icon: badgeIcon(IconRefresh),     label: 'Refunded'   },
+    FAILED:     { cls: 'badge-danger',   icon: badgeIcon(IconX),           label: 'Failed'     },
+    AVAILABLE:  { cls: 'badge-success',  icon: badgeIcon(IconCheck),       label: 'Available'  },
+    OCCUPIED:   { cls: 'badge-danger',   icon: badgeIcon(IconCircleDot),   label: 'Occupied'   },
+    MAINTENANCE:{ cls: 'badge-muted',    icon: badgeIcon(IconWrench),     label: 'Maintenance' },
+    OPEN:       { cls: 'badge-danger',   icon: badgeIcon(IconTag),         label: 'Open'       },
+    IN_PROGRESS:{ cls: 'badge-info',     icon: badgeIcon(IconClock),       label: 'In Progress'},
+    RESOLVED:   { cls: 'badge-success',  icon: badgeIcon(IconCheckCircle), label: 'Resolved'   },
+    true:       { cls: 'badge-success',  icon: badgeIcon(IconCheck),       label: 'Active'     },
+    false:      { cls: 'badge-danger',   icon: badgeIcon(IconX),           label: 'Inactive'   },
   };
-  const { cls, label } = config[status] || { cls: 'badge-muted', label: status };
-  return <span className={`badge ${cls}`}>{label}</span>;
+
+  const badgeTypeCls = type ? `badge-${type}` : '';
+  const { cls, icon, label } = config[status] || { cls: badgeTypeCls || 'badge-muted', icon: null, label: status };
+  
+  return <span className={`badge ${cls}`}>{icon}{children || label}</span>;
 }
 
 /* ── Empty State ─────────────────────────────────────── */
-export function EmptyState({ icon = '📭', title, message, action }) {
+export function EmptyState({ icon, title, message, action }) {
   return (
     <div className="empty-state">
       <div className="empty-icon">{icon}</div>

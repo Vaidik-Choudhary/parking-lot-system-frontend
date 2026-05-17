@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { Spinner, Alert } from '../../components/common/UI';
+import { IconBuilding, IconParking, IconBooking, IconPayment, IconCar, IconMotorbike, IconTruck } from '../../components/common/Icons';
 import { api } from '../../utils/api';
 
 export default function PlatformAnalytics() {
@@ -29,10 +30,10 @@ export default function PlatformAnalytics() {
           {/* Main stats */}
           <div className="stat-grid">
             {[
-              { icon: '🏢', label: 'Active Lots',       value: platform.totalActiveLots,            sub: 'Approved & active',      cls: 'blue'   },
-              { icon: '🅿',  label: 'Platform Occupancy',value: `${(platform.platformOccupancyRate || 0).toFixed(1)}%`, sub: `${platform.totalOccupiedSpots} / ${platform.totalSpots} spots`, cls: 'green'  },
-              { icon: '📋', label: 'Bookings Today',    value: platform.totalBookingsToday,         sub: `${platform.totalBookingsAllTime} all time`, cls: 'orange' },
-              { icon: '💰', label: 'Revenue All Time',  value: `₹${(platform.totalRevenueAllTime || 0).toFixed(0)}`, sub: `₹${(platform.totalRevenueToday || 0).toFixed(0)} today`, cls: 'purple' },
+              { icon: <IconBuilding size={24} />, label: 'Active Lots',       value: platform.totalActiveLots,            sub: 'Approved & active',      cls: 'blue'   },
+              { icon: <IconParking size={24} />,  label: 'Platform Occupancy',value: `${(platform.platformOccupancyRate || 0).toFixed(1)}%`, sub: `${platform.totalOccupiedSpots} / ${platform.totalSpots} spots`, cls: 'green'  },
+              { icon: <IconBooking size={24} />, label: 'Bookings Today',    value: platform.totalBookingsToday,         sub: `${platform.totalBookingsAllTime} all time`, cls: 'orange' },
+              { icon: <IconPayment size={24} />, label: 'Revenue All Time',  value: `₹${(platform.totalRevenueAllTime || 0).toFixed(0)}`, sub: `₹${(platform.totalRevenueToday || 0).toFixed(0)} today`, cls: 'purple' },
             ].map(s => (
               <div key={s.label} className="stat-card">
                 <div className={`stat-icon ${s.cls}`}>{s.icon}</div>
@@ -72,13 +73,13 @@ export default function PlatformAnalytics() {
                 {Object.entries(platform.bookingsByVehicleType).map(([type, count]) => {
                   const total = Object.values(platform.bookingsByVehicleType).reduce((a,b) => a+b, 0);
                   const pct   = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
-                  const icons = { FOUR_WHEELER: '🚗', TWO_WHEELER: '🛵', HEAVY: '🚛' };
+                  const icons = { FOUR_WHEELER: <IconCar size={32} />, TWO_WHEELER: <IconMotorbike size={32} />, HEAVY: <IconTruck size={32} /> };
                   return (
                     <div key={type} style={{
                       flex: '1 1 160px', background: 'var(--bg)',
                       borderRadius: 10, padding: '16px', textAlign: 'center'
                     }}>
-                      <div style={{ fontSize: '2rem', marginBottom: 6 }}>{icons[type] || '🚗'}</div>
+                      <div style={{ fontSize: '2rem', marginBottom: 6, color: 'var(--primary)' }}>{icons[type] || <IconCar size={32} />}</div>
                       <div style={{ fontWeight: 700, fontSize: '1.5rem' }}>{count}</div>
                       <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                         {type.replace('_', ' ')} ({pct}%)

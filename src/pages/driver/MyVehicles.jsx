@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import DriverLayout from '../../components/driver/DriverLayout';
 import { Spinner, Modal, Alert, EmptyState } from '../../components/common/UI';
+import { IconCar, IconEdit, IconTrash, IconEV, IconMotorbike, IconTruck } from '../../components/common/Icons';
 import { api } from '../../utils/api';
 
 const EMPTY_FORM = { licensePlate: '', make: '', model: '', color: '', vehicleType: 'FOUR_WHEELER', isEV: false };
@@ -80,7 +81,7 @@ export default function MyVehicles() {
       {success && <Alert type="success" onClose={() => setSuccess('')}>{success}</Alert>}
 
       {loading ? <Spinner /> : vehicles.length === 0 ? (
-        <EmptyState icon="🚗" title="No vehicles registered"
+        <EmptyState icon={<IconCar size={48} />} title="No vehicles registered"
           message="Add your vehicle to speed up the booking process."
           action={<button className="btn btn-primary" onClick={openAdd}>Add Vehicle</button>}
         />
@@ -90,18 +91,20 @@ export default function MyVehicles() {
             <div key={v.vehicleId} className="card">
               <div className="flex-between mb-3">
                 <div style={{ fontSize: '2rem' }}>
-                  {v.vehicleType === 'TWO_WHEELER' ? '🛵' : v.vehicleType === 'HEAVY' ? '🚛' : '🚗'}
+                  {v.vehicleType === 'TWO_WHEELER' && <IconMotorbike size={32} />}
+                  {v.vehicleType === 'FOUR_WHEELER' && <IconCar size={32} />}
+                  {v.vehicleType === 'HEAVY' && <IconTruck size={32} />}
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button className="btn btn-secondary btn-sm" onClick={() => openEdit(v)}>✏️</button>
-                  <button className="btn btn-danger btn-sm" onClick={() => remove(v.vehicleId)}>🗑️</button>
+                  <button className="btn btn-secondary btn-sm" onClick={() => openEdit(v)}><IconEdit size={14} /></button>
+                  <button className="btn btn-danger btn-sm" onClick={() => remove(v.vehicleId)}><IconTrash size={14} /></button>
                 </div>
               </div>
               <h3 style={{ fontWeight: 700, letterSpacing: '0.05em' }}>{v.licensePlate}</h3>
               <p style={{ fontSize: '0.875rem', marginTop: 4 }}>{v.make} {v.model}</p>
               <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
                 <span className="badge badge-primary">{v.vehicleType.replace('_', ' ')}</span>
-                {v.isEV && <span className="badge badge-success">⚡ EV</span>}
+                {v.isEV && <span className="badge badge-success"><IconEV size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> EV</span>}
                 {v.color && <span className="badge badge-muted">{v.color}</span>}
               </div>
             </div>
@@ -158,7 +161,7 @@ export default function MyVehicles() {
         <div className="form-group">
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
             <input type="checkbox" name="isEV" checked={form.isEV} onChange={handle} />
-            <span className="form-label" style={{ margin: 0 }}>⚡ This is an Electric Vehicle (EV)</span>
+            <span className="form-label" style={{ margin: 0 }}><IconEV size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> This is an Electric Vehicle (EV)</span>
           </label>
         </div>
       </Modal>

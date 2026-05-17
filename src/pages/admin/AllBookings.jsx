@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { Spinner, Alert, EmptyState, StatusBadge } from '../../components/common/UI';
+import { IconBooking, IconCar, IconCalendar } from '../../components/common/Icons';
 import { api } from '../../utils/api';
 
 export default function AllBookings() {
@@ -56,7 +57,7 @@ export default function AllBookings() {
       </div>
 
       {loading ? <Spinner /> : filtered.length === 0 ? (
-        <EmptyState icon="📋" title="No bookings found" />
+        <EmptyState icon={<IconBooking size={48} />} title="No bookings found" />
       ) : (
         <div className="card">
           <div className="table-wrapper">
@@ -79,7 +80,7 @@ export default function AllBookings() {
                     <td>
                       <span className={`badge ${b.bookingType === 'DRIVE_IN' ? 'badge-success' : 'badge-primary'}`}
                         style={{ fontSize: '0.72rem' }}>
-                        {b.bookingType === 'DRIVE_IN' ? '🚗 Drive-In' : '📅 Pre-Booking'}
+                        {b.bookingType === 'DRIVE_IN' ? <><IconCar size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Drive-In</> : <><IconCalendar size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Pre-Booking</>}
                       </span>
                     </td>
                     <td><StatusBadge status={b.status} /></td>

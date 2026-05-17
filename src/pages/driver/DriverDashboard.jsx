@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DriverLayout from '../../components/driver/DriverLayout';
 import { Spinner, StatusBadge, EmptyState } from '../../components/common/UI';
+import { IconParking, IconHourglass, IconCheckCircle, IconPayment } from '../../components/common/Icons';
 import { api, getUserName } from '../../utils/api';
 
 export default function DriverDashboard() {
@@ -33,7 +34,7 @@ export default function DriverDashboard() {
     >
       {/* Welcome */}
       <div className="page-header"><h1>
-        Welcome back, { (name && name !== 'null') ? name.split(' ')[0] : 'Driver' }! 👋
+        Welcome back, { (name && name !== 'null') ? name.split(' ')[0] : 'Driver' }!
         </h1>
         <p>Here's an overview of your parking activity.</p>
       </div>
@@ -41,7 +42,7 @@ export default function DriverDashboard() {
       {/* Stat Cards */}
       <div className="stat-grid">
         <div className="stat-card">
-          <div className="stat-icon blue">🅿</div>
+          <div className="stat-icon blue"><IconParking size={24} /></div>
           <div className="stat-info">
             <div className="stat-label">Active Parking</div>
             <div className="stat-value">{active}</div>
@@ -49,7 +50,7 @@ export default function DriverDashboard() {
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-icon orange">⏳</div>
+          <div className="stat-icon orange"><IconHourglass size={24} /></div>
           <div className="stat-info">
             <div className="stat-label">Reserved</div>
             <div className="stat-value">{reserved}</div>
@@ -57,7 +58,7 @@ export default function DriverDashboard() {
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-icon green">✅</div>
+          <div className="stat-icon green"><IconCheckCircle size={24} /></div>
           <div className="stat-info">
             <div className="stat-label">Completed</div>
             <div className="stat-value">{completed}</div>
@@ -65,7 +66,7 @@ export default function DriverDashboard() {
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-icon purple">💳</div>
+          <div className="stat-icon purple"><IconPayment size={24} /></div>
           <div className="stat-info">
             <div className="stat-label">Total Spent</div>
             <div className="stat-value">
@@ -87,7 +88,7 @@ export default function DriverDashboard() {
         </div>
 
         {loading ? <Spinner /> : bookings.length === 0 ? (
-          <EmptyState icon="🅿" title="No bookings yet"
+          <EmptyState icon={<IconParking size={48} />} title="No bookings yet"
             message="Find a parking spot to get started."
             action={
               <button className="btn btn-primary"

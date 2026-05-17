@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ManagerLayout from '../../components/manager/ManagerLayout';
 import { Spinner, Alert } from '../../components/common/UI';
+import { IconArrowLeft, IconChart, IconPayment, IconBooking, IconClock } from '../../components/common/Icons';
 import { api } from '../../utils/api';
 
 export default function LotAnalytics() {
@@ -31,7 +32,7 @@ export default function LotAnalytics() {
   return (
     <ManagerLayout title="Lot Analytics"
       topbarRight={
-        <button className="btn btn-secondary btn-sm" onClick={() => navigate(-1)}>← Back</button>
+        <button className="btn btn-secondary btn-sm" onClick={() => navigate(-1)}><IconArrowLeft size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Back</button>
       }
     >
       <div className="page-header">
@@ -46,7 +47,7 @@ export default function LotAnalytics() {
           {/* Stat cards */}
           <div className="stat-grid">
             <div className="stat-card">
-              <div className="stat-icon blue">📊</div>
+              <div className="stat-icon blue"><IconChart size={24} /></div>
               <div className="stat-info">
                 <div className="stat-label">Current Occupancy</div>
                 <div className="stat-value">
@@ -56,7 +57,7 @@ export default function LotAnalytics() {
               </div>
             </div>
             <div className="stat-card">
-              <div className="stat-icon green">💰</div>
+              <div className="stat-icon green"><IconPayment size={24} /></div>
               <div className="stat-info">
                 <div className="stat-label">Revenue Today</div>
                 <div className="stat-value">₹{summary.revenueToday?.toFixed(0) || 0}</div>
@@ -64,7 +65,7 @@ export default function LotAnalytics() {
               </div>
             </div>
             <div className="stat-card">
-              <div className="stat-icon orange">📋</div>
+              <div className="stat-icon orange"><IconBooking size={24} /></div>
               <div className="stat-info">
                 <div className="stat-label">Bookings Today</div>
                 <div className="stat-value">{summary.bookingsToday || 0}</div>
@@ -72,7 +73,7 @@ export default function LotAnalytics() {
               </div>
             </div>
             <div className="stat-card">
-              <div className="stat-icon purple">⏱️</div>
+              <div className="stat-icon purple"><IconClock size={24} /></div>
               <div className="stat-info">
                 <div className="stat-label">Avg Duration</div>
                 <div className="stat-value">
@@ -120,7 +121,7 @@ export default function LotAnalytics() {
                       {h}:00
                     </div>
                     <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>
-                      {i === 0 ? '🔥 Busiest' : i === 1 ? '🌟 2nd' : '📈 3rd'}
+                      {i === 0 ? 'Busiest' : i === 1 ? '2nd' : '3rd'}
                     </div>
                   </div>
                 ))}
@@ -160,7 +161,7 @@ export default function LotAnalytics() {
               })}
             </div>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>
-              🔴 Red bars = peak hours
+              Peak hours highlighted in red
             </p>
           </div>
 

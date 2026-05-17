@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { Spinner, Alert, EmptyState } from '../../components/common/UI';
+import { IconUsers } from '../../components/common/Icons';
 import { api } from '../../utils/api';
 
 export default function ManageUsers() {
@@ -71,7 +72,7 @@ export default function ManageUsers() {
       </div>
 
       {loading ? <Spinner /> : filtered.length === 0 ? (
-        <EmptyState icon="👥" title="No users found" />
+        <EmptyState icon={<IconUsers size={48} />} title="No users found" />
       ) : (
         <div className="card">
           <div className="table-wrapper">
@@ -96,13 +97,17 @@ export default function ManageUsers() {
                       </span>
                     </td>
                     <td>
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        {u.active
-                          ? <button className="btn btn-warning btn-sm" onClick={() => suspend(u.id)}>Suspend</button>
-                          : <button className="btn btn-success btn-sm" onClick={() => activate(u.id)}>Activate</button>
-                        }
-                        <button className="btn btn-danger btn-sm" onClick={() => remove(u.id)}>Delete</button>
-                      </div>
+                      {u.role !== 'ADMIN' ? (
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          {u.active
+                            ? <button className="btn btn-warning btn-sm" onClick={() => suspend(u.id)}>Suspend</button>
+                            : <button className="btn btn-success btn-sm" onClick={() => activate(u.id)}>Activate</button>
+                          }
+                          <button className="btn btn-danger btn-sm" onClick={() => remove(u.id)}>Delete</button>
+                        </div>
+                      ) : (
+                        <span className="text-muted" style={{ fontSize: '0.8rem' }}>System Protected</span>
+                      )}
                     </td>
                   </tr>
                 ))}

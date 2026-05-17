@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ManagerLayout from '../../components/manager/ManagerLayout';
 import { Spinner, StatusBadge, EmptyState } from '../../components/common/UI';
+import { IconBuilding, IconParking, IconClock, IconChart, IconCar, IconCalendar, IconBell, IconRefresh, IconUsers, IconPayment, IconCheck, IconHourglass } from '../../components/common/Icons';
 import { api, getUserName } from '../../utils/api';
 
 /**
@@ -39,11 +40,17 @@ export default function ManagerDashboard() {
         setDashLoading(true);
         try {
           const results = await Promise.all(
-            approved.map(l =>
-              api.get(`/api/bookings/manager/${l.lotId}/dashboard`)
-                .then(d => ({ lotId: l.lotId, lotName: l.name, ...d }))
-                .catch(() => ({ lotId: l.lotId, lotName: l.name, totalActive: 0, totalUpcoming: 0, activeBookings: [], upcomingBookings: [] }))
-            )
+            approved.map(async l => {
+              try {
+                const [d, subs] = await Promise.all([
+                  api.get(`/api/bookings/manager/${l.lotId}/dashboard`),
+                  api.get(`/api/subscriptions/lot/${l.lotId}/active`)
+                ]);
+                return { lotId: l.lotId, lotName: l.name, ...d, activeSubscriptions: subs };
+              } catch (e) {
+                return { lotId: l.lotId, lotName: l.name, totalActive: 0, totalUpcoming: 0, activeBookings: [], upcomingBookings: [], activeSubscriptions: [] };
+              }
+            })
           );
           const map = {};
           results.forEach(r => { map[r.lotId] = r; });
@@ -62,8 +69,11 @@ export default function ManagerDashboard() {
 
   const refreshDashboard = useCallback(async (lotId) => {
     try {
-      const d = await api.get(`/api/bookings/manager/${lotId}/dashboard`);
-      setDashboards(prev => ({ ...prev, [lotId]: { ...prev[lotId], ...d } }));
+      const [d, subs] = await Promise.all([
+        api.get(`/api/bookings/manager/${lotId}/dashboard`),
+        api.get(`/api/subscriptions/lot/${lotId}/active`)
+      ]);
+      setDashboards(prev => ({ ...prev, [lotId]: { ...prev[lotId], ...d, activeSubscriptions: subs } }));
     } catch (e) { console.error(e); }
   }, []);
 
@@ -79,9 +89,12 @@ export default function ManagerDashboard() {
 
   // Selected lot dashboard data
   const currentDash = selectedLotId ? dashboards[selectedLotId] : null;
-  const displayList = currentDash
-    ? (activeTab === 'active' ? currentDash.activeBookings : currentDash.upcomingBookings)
-    : [];
+  let displayList = [];
+  if (currentDash) {
+    if (activeTab === 'active') displayList = currentDash.activeBookings || [];
+    else if (activeTab === 'upcoming') displayList = currentDash.upcomingBookings || [];
+    else if (activeTab === 'subscriptions') displayList = currentDash.activeSubscriptions || [];
+  }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   const fmt = dt => dt ? new Date(dt).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }) : '—';
@@ -95,14 +108,14 @@ export default function ManagerDashboard() {
       }
     >
       <div className="page-header">
-        <h1>Welcome, {name?.split(' ')[0]}! 🏢</h1>
+        <h1>Welcome, {name?.split(' ')[0]}! <IconBuilding size={28} style={{ verticalAlign: '-4px' }} /></h1>
         <p>Here's an overview of your parking facilities.</p>
       </div>
 
       {/* ── Stat cards ──────────────────────────────────────────────────── */}
       <div className="stat-grid">
         <div className="stat-card">
-          <div className="stat-icon blue">🏢</div>
+          <div className="stat-icon blue"><IconBuilding size={24} /></div>
           <div className="stat-info">
             <div className="stat-label">Total Lots</div>
             <div className="stat-value">{lots.length}</div>
@@ -110,7 +123,7 @@ export default function ManagerDashboard() {
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-icon green">🅿</div>
+          <div className="stat-icon green"><IconParking size={24} /></div>
           <div className="stat-info">
             <div className="stat-label">Total Spots</div>
             <div className="stat-value">{totalSpots}</div>
@@ -118,7 +131,7 @@ export default function ManagerDashboard() {
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-icon orange">⏳</div>
+          <div className="stat-icon orange"><IconClock size={24} /></div>
           <div className="stat-info">
             <div className="stat-label">Pending Approval</div>
             <div className="stat-value">{pendingLots}</div>
@@ -126,7 +139,7 @@ export default function ManagerDashboard() {
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-icon purple">📊</div>
+          <div className="stat-icon purple"><IconChart size={24} /></div>
           <div className="stat-info">
             <div className="stat-label">Occupancy</div>
             <div className="stat-value">
@@ -139,7 +152,7 @@ export default function ManagerDashboard() {
         </div>
         {/* New: live booking counts */}
         <div className="stat-card">
-          <div className="stat-icon green">🚗</div>
+          <div className="stat-icon green"><IconCar size={24} /></div>
           <div className="stat-info">
             <div className="stat-label">Active Now</div>
             <div className="stat-value" style={{ color: 'var(--success)' }}>{totalActive}</div>
@@ -147,7 +160,7 @@ export default function ManagerDashboard() {
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-icon blue">📅</div>
+          <div className="stat-icon blue"><IconCalendar size={24} /></div>
           <div className="stat-info">
             <div className="stat-label">Upcoming</div>
             <div className="stat-value" style={{ color: 'var(--primary-light)' }}>{totalUpcoming}</div>
@@ -165,7 +178,7 @@ export default function ManagerDashboard() {
           </button>
         </div>
         {loading ? <Spinner /> : lots.length === 0 ? (
-          <EmptyState icon="🏢" title="No lots registered yet"
+          <EmptyState icon={<IconBuilding size={48} />} title="No lots registered yet"
             message="Register your first parking facility."
             action={
               <button className="btn btn-primary" onClick={() => navigate('/manager/lots')}>
@@ -193,12 +206,12 @@ export default function ManagerDashboard() {
                       <td>{lot.availableSpots} / {lot.totalSpots}</td>
                       <td>
                         {dash
-                          ? <span className="badge badge-success">🚗 {dash.totalActive}</span>
+                          ? <span className="badge badge-success"><IconCar size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> {dash.totalActive}</span>
                           : <span className="text-muted">—</span>}
                       </td>
                       <td>
                         {dash
-                          ? <span className="badge badge-primary">📅 {dash.totalUpcoming}</span>
+                          ? <span className="badge badge-primary"><IconCalendar size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> {dash.totalUpcoming}</span>
                           : <span className="text-muted">—</span>}
                       </td>
                       <td>
@@ -208,7 +221,7 @@ export default function ManagerDashboard() {
                       </td>
                       <td>
                         <span className={`badge ${lot.approved ? 'badge-success' : 'badge-warning'}`}>
-                          {lot.approved ? '✓ Approved' : '⏳ Pending'}
+                          {lot.approved ? <><IconCheck size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Approved</> : <><IconHourglass size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Pending</>}
                         </span>
                       </td>
                       <td>
@@ -218,7 +231,7 @@ export default function ManagerDashboard() {
                           <button className="btn btn-secondary btn-sm"
                             onClick={() => navigate(`/manager/lots/${lot.lotId}/bookings`)}>Bookings</button>
                           <button className="btn btn-secondary btn-sm"
-                            onClick={() => navigate(`/manager/lots/${lot.lotId}/analytics`)}>📊</button>
+                            onClick={() => navigate(`/manager/lots/${lot.lotId}/analytics`)}><IconChart size={14} /></button>
                         </div>
                       </td>
                     </tr>
@@ -230,10 +243,10 @@ export default function ManagerDashboard() {
         )}
       </div>
 
-      {/* ── 🔔 Manager Notification Dashboard ────────────────────────────── */}
+
       <div className="card">
         <div className="card-header">
-          <h3 className="card-title">🔔 Booking Notifications</h3>
+          <h3 className="card-title"><IconBell size={18} style={{ verticalAlign: '-2px', marginRight: 8 }} /> Booking Notifications</h3>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {/* Lot selector */}
             {Object.keys(dashboards).length > 1 && (
@@ -250,81 +263,99 @@ export default function ManagerDashboard() {
             )}
             <button className="btn btn-secondary btn-sm"
               onClick={() => selectedLotId && refreshDashboard(selectedLotId)}>
-              🔄 Refresh
+              <IconRefresh size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Refresh
             </button>
           </div>
         </div>
 
         {dashLoading ? <Spinner /> : Object.keys(dashboards).length === 0 ? (
-          <EmptyState icon="🔔" title="No approved lots"
+          <EmptyState icon={<IconBell size={48} />} title="No approved lots"
             message="Notifications appear once your lots are approved." />
         ) : (
           <>
-            {/* Active / Upcoming tabs */}
-            <div className="auth-tabs mb-4" style={{ maxWidth: 340 }}>
+            {/* Active / Upcoming / Subscriptions tabs */}
+            <div className="auth-tabs mb-4" style={{ maxWidth: 480 }}>
               <button
                 className={`auth-tab ${activeTab === 'active' ? 'active' : ''}`}
                 onClick={() => setActiveTab('active')}
               >
-                🚗 Active ({currentDash?.totalActive ?? 0})
+                <IconCar size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Active ({currentDash?.totalActive ?? 0})
               </button>
               <button
                 className={`auth-tab ${activeTab === 'upcoming' ? 'active' : ''}`}
                 onClick={() => setActiveTab('upcoming')}
               >
-                📅 Upcoming ({currentDash?.totalUpcoming ?? 0})
+                <IconCalendar size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Upcoming ({currentDash?.totalUpcoming ?? 0})
+              </button>
+              <button
+                className={`auth-tab ${activeTab === 'subscriptions' ? 'active' : ''}`}
+                onClick={() => setActiveTab('subscriptions')}
+              >
+                <IconParking size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Subs ({currentDash?.activeSubscriptions?.length ?? 0})
               </button>
             </div>
 
             {/* Context label */}
             <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: 12 }}>
-              {activeTab === 'active'
-                ? '🟢 Drivers currently parked — booking status is ACTIVE.'
-                : '🔵 Future reservations — startTime is ahead of now (status RESERVED).'}
+              {activeTab === 'active' && 'Drivers currently parked — booking status is ACTIVE.'}
+              {activeTab === 'upcoming' && 'Future reservations — startTime is ahead of now (status RESERVED).'}
+              {activeTab === 'subscriptions' && 'Permanent monthly blockages.'}
             </p>
 
             {/* Notification list */}
             {displayList.length === 0 ? (
               <EmptyState
-                icon={activeTab === 'active' ? '🅿' : '📅'}
-                title={activeTab === 'active' ? 'No active bookings right now' : 'No upcoming reservations'}
+                icon={activeTab === 'active' ? <IconCar size={48} /> : (activeTab === 'subscriptions' ? <IconParking size={48} /> : <IconCalendar size={48} />)}
+                title={activeTab === 'active' ? 'No active bookings right now' : (activeTab === 'subscriptions' ? 'No active subscriptions' : 'No upcoming reservations')}
                 message={activeTab === 'active'
                   ? 'No drivers are currently parked in this lot.'
-                  : 'No reservations scheduled for the future.'}
+                  : (activeTab === 'subscriptions' ? 'No drivers have active monthly subscriptions.' : 'No reservations scheduled for the future.')}
               />
             ) : (
               <div className="notif-list">
-                {displayList.map(b => (
-                  <div key={b.bookingId} className="notif-item">
-                    <div className="notif-icon"
-                      style={{ background: activeTab === 'active' ? '#dcfce7' : '#eff6ff' }}>
-                      {activeTab === 'active' ? '🚗' : '📅'}
+                {displayList.map(item => {
+                  const isSub = activeTab === 'subscriptions';
+                  return (
+                    <div key={isSub ? item.id : item.bookingId} className="notif-item">
+                      <div className={`notif-icon ${activeTab === 'active' ? 'success' : (isSub ? 'warning' : 'info')}`}>
+                        {activeTab === 'active' ? <IconCar size={18} /> : (isSub ? <IconParking size={18} /> : <IconCalendar size={18} />)}
+                      </div>
+                      <div className="notif-content">
+                        <div className="notif-header-row">
+                          <strong>{isSub ? `Subscription #${item.id}` : `Booking #${item.bookingId}`}</strong>
+                          <StatusBadge status={item.status} />
+                        </div>
+                        <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: 2 }}>
+                          <IconUsers size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> {item.driverEmail} &nbsp;·&nbsp;
+                          <IconParking size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Spot #{item.spotId}
+                          {!isSub && <>&nbsp;·&nbsp;<IconCar size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> {item.vehiclePlate}</>}
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 4, display: 'flex', gap: 16 }}>
+                          {!isSub ? (
+                            <>
+                              <span>
+                                <span className={`badge ${item.bookingType === 'DRIVE_IN' ? 'badge-success' : 'badge-primary'}`}>
+                                  {item.bookingType === 'DRIVE_IN' ? <><IconCar size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Drive-In</> : <><IconCalendar size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Pre-Booking</>}
+                                </span>
+                              </span>
+                              <span>In: {fmt(item.startTime)}</span>
+                              <span>Out: {fmt(item.endTime)}</span>
+                              {item.estimatedAmount > 0 && (
+                                <span><IconPayment size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Est. ₹{item.estimatedAmount}</span>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              <span>Start: {fmt(item.startDate)}</span>
+                              <span>Renew: {fmt(item.endDate)}</span>
+                              <span><IconPayment size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> ₹{item.monthlyRate}/mo</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div className="notif-content">
-                      <div className="notif-header-row">
-                        <strong>Booking #{b.bookingId}</strong>
-                        <StatusBadge status={b.status} />
-                      </div>
-                      <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: 2 }}>
-                        👤 {b.driverEmail} &nbsp;·&nbsp;
-                        🅿 Spot #{b.spotId} &nbsp;·&nbsp;
-                        🚘 {b.vehiclePlate}
-                      </div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 4, display: 'flex', gap: 16 }}>
-                        <span>
-                          <span className={`badge ${b.bookingType === 'DRIVE_IN' ? 'badge-success' : 'badge-primary'}`}>
-                            {b.bookingType === 'DRIVE_IN' ? '🚗 Drive-In' : '📅 Pre-Booking'}
-                          </span>
-                        </span>
-                        <span>📥 {fmt(b.startTime)}</span>
-                        <span>📤 {fmt(b.endTime)}</span>
-                        {b.estimatedAmount > 0 && (
-                          <span>💰 Est. ₹{b.estimatedAmount}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </>

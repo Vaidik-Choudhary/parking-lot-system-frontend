@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { api, saveAuth } from '../../utils/api';
 import { Alert } from '../../components/common/UI';
+import { IconParking } from '../../components/common/Icons';
 
 export default function LoginPage() {
   const navigate  = useNavigate();
@@ -45,7 +46,7 @@ export default function LoginPage() {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-logo">
-          <h1>🅿 ParkEase</h1>
+          <h1><IconParking size={32} style={{ verticalAlign: '-6px', marginRight: 8 }} /> ParkEase</h1>
           <p>Smart Parking Management Platform</p>
         </div>
 
@@ -87,7 +88,12 @@ export default function LoginPage() {
           <button
             type="button"
             className="btn btn-secondary btn-block btn-lg"
-            style={{ marginTop: '12px' }}
+            style={{ 
+              marginTop: '12px', 
+              background: 'rgba(255, 255, 255, 0.05)', 
+              border: '1px solid var(--border)',
+              color: 'var(--text-primary)'
+            }}
             onClick={() => window.location.href = 'http://localhost:8080/oauth2/authorize/google'}
           >
             Continue with Google

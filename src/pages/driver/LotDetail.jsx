@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import DriverLayout from '../../components/driver/DriverLayout';
 import { Spinner, Modal, Alert } from '../../components/common/UI';
+import { IconRefresh, IconArrowLeft, IconMap, IconClock, IconParking, IconCalendar, IconCar, IconSearch, IconCheckCircle, IconEV, IconStop, IconAlertTriangle, IconHandicap, IconReceipt } from '../../components/common/Icons';
 import { api } from '../../utils/api';
 
 /**
@@ -23,12 +24,12 @@ import { api } from '../../utils/api';
  */
 export default function LotDetail() {
   const { lotId } = useParams();
-  const navigate  = useNavigate();
+  const navigate = useNavigate();
 
   // ── Lot metadata ──────────────────────────────────────────────────────────
-  const [lot, setLot]     = useState(null);
+  const [lot, setLot] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError]   = useState('');
+  const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   // ── Booking mode (Step 1) ─────────────────────────────────────────────────
@@ -37,7 +38,7 @@ export default function LotDetail() {
 
   // ── PRE_BOOKING — time filter state ──────────────────────────────────────
   const [filterStart, setFilterStart] = useState('');
-  const [filterEnd,   setFilterEnd]   = useState('');
+  const [filterEnd, setFilterEnd] = useState('');
   const [filterLoading, setFilterLoading] = useState(false);
 
   // ── Spots (populated after mode is chosen) ────────────────────────────────
@@ -138,8 +139,8 @@ export default function LotDetail() {
   const getEstimate = () => {
     if (!form.endTime || !selected) return null;
     const start = bookingMode === 'DRIVE_IN' ? new Date() : new Date(toISO(filterStart));
-    const end   = new Date(toISO(form.endTime));
-    const diff  = end - start;
+    const end = new Date(toISO(form.endTime));
+    const diff = end - start;
     if (diff <= 0) return null;
     return (Math.max(1, diff / 3600000) * selected.pricePerHour).toFixed(2);
   };
@@ -151,9 +152,19 @@ export default function LotDetail() {
     if (!form.endTime) return setError('Please select an end/departure time.');
 
     // For DRIVE_IN, endTime must be in the future
-    if (new Date(toISO(form.endTime)) <= new Date()) {
+    const endTs = new Date(toISO(form.endTime)).getTime();
+    if (isNaN(endTs) || endTs <= new Date().getTime()) {
       return setError('End time must be in the future.');
     }
+
+    // NEW: For PRE_BOOKING, departure time must not exceed the chosen window
+    if (bookingMode === 'PRE_BOOKING' && filterEnd) {
+      const limitTs = new Date(toISO(filterEnd)).getTime();
+      if (!isNaN(limitTs) && endTs > limitTs) {
+        return setError(`Departure time cannot be after your selected window end (${new Date(limitTs).toLocaleString()}).`);
+      }
+    }
+
     // For RESERVED_AVAILABLE drive-in spots, endTime must not exceed reservedFrom
     if (bookingMode === 'DRIVE_IN' && selected?.reservedFrom) {
       if (new Date(toISO(form.endTime)) > new Date(selected.reservedFrom)) {
@@ -167,11 +178,11 @@ export default function LotDetail() {
     setBookingLoading(true);
     try {
       const payload = {
-        lotId:        Number(lotId),
-        spotId:       selected.spotId,
+        lotId: Number(lotId),
+        spotId: selected.spotId,
         vehiclePlate: form.vehiclePlate.toUpperCase().trim(),
-        bookingType:  bookingMode,
-        endTime:      toISO(form.endTime),
+        bookingType: bookingMode,
+        endTime: toISO(form.endTime),
       };
       // For PRE_BOOKING, include the filtered startTime
       if (bookingMode === 'PRE_BOOKING') {
@@ -197,10 +208,10 @@ export default function LotDetail() {
         recipientEmail: localStorage.getItem('email'),
         type: bookingMode === 'DRIVE_IN' ? 'CHECKIN' : 'BOOKING_CONFIRMED',
         channel: 'BOTH',
-        title: bookingMode === 'DRIVE_IN' ? 'Drive-In Active! 🚗' : 'Booking Confirmed! 🎉',
+        title: bookingMode === 'DRIVE_IN' ? 'Drive-In Active!' : 'Booking Confirmed!',
         message: `Spot ${selected.spotNumber} at ${lot?.name}. Booking #${booking.bookingId}`,
         relatedId: booking.bookingId, relatedType: 'BOOKING',
-      }).catch(() => {});
+      }).catch(() => { });
 
     } catch (err) {
       setError(err.message);
@@ -241,14 +252,14 @@ export default function LotDetail() {
           {bookingMode && spotsLoaded && (
             <button className="btn btn-secondary btn-sm"
               onClick={bookingMode === 'DRIVE_IN' ? loadDriveInSpots : loadPreBookingSpots}>
-              🔄 Refresh
+              <IconRefresh size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Refresh
             </button>
           )}
-          <button className="btn btn-secondary btn-sm" onClick={() => navigate(-1)}>← Back</button>
+          <button className="btn btn-secondary btn-sm" onClick={() => navigate(-1)}><IconArrowLeft size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Back</button>
         </div>
       }
     >
-      {error   && <Alert type="danger"  onClose={() => setError('')}>{error}</Alert>}
+      {error && <Alert type="danger" onClose={() => setError('')}>{error}</Alert>}
       {success && <Alert type="success" onClose={() => setSuccess('')}>{success}</Alert>}
 
       {/* Lot info card */}
@@ -256,15 +267,16 @@ export default function LotDetail() {
         <div className="flex-between mb-3">
           <div>
             <h2>{lot?.name}</h2>
-            <p>📍 {lot?.address}, {lot?.city}</p>
+            <p><IconMap size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> {lot?.address}, {lot?.city}</p>
           </div>
           <span className={`badge ${lot?.open ? 'badge-success' : 'badge-danger'}`}>
             {lot?.open ? '● Open' : '● Closed'}
           </span>
         </div>
         <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-          <div className="lot-meta-item">🕐 {lot?.openTime} – {lot?.closeTime}</div>
-          <div className="lot-meta-item">🅿 {lot?.availableSpots} / {lot?.totalSpots} available</div>
+          <div className="lot-meta-item"><IconClock size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> {lot?.openTime} – {lot?.closeTime}</div>
+          <div className="lot-meta-item"><IconParking size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> {lot?.availableSpots} / {lot?.totalSpots} available</div>
+          {lot?.isHandicappedFriendly && <div className="lot-meta-item" style={{ color: 'var(--info)', fontWeight: 500 }}><IconHandicap size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Handicapped Friendly</div>}
         </div>
       </div>
 
@@ -276,7 +288,7 @@ export default function LotDetail() {
             className={`booking-mode-card ${bookingMode === 'PRE_BOOKING' ? 'active' : ''}`}
             onClick={() => { setBookingMode('PRE_BOOKING'); }}
           >
-            <div className="booking-mode-icon">📅</div>
+            <div className="booking-mode-icon"><IconCalendar size={24} /></div>
             <div>
               <strong>Pre-Booking</strong>
               <p style={{ fontSize: '0.82rem', marginTop: 4 }}>
@@ -288,7 +300,7 @@ export default function LotDetail() {
             className={`booking-mode-card ${bookingMode === 'DRIVE_IN' ? 'active' : ''}`}
             onClick={() => { setBookingMode('DRIVE_IN'); }}
           >
-            <div className="booking-mode-icon">🚗</div>
+            <div className="booking-mode-icon"><IconCar size={24} /></div>
             <div>
               <strong>Drive-In</strong>
               <p style={{ fontSize: '0.82rem', marginTop: 4 }}>
@@ -328,11 +340,11 @@ export default function LotDetail() {
             onClick={loadPreBookingSpots}
             disabled={filterLoading || !filterStart || !filterEnd}
           >
-            {filterLoading ? 'Searching...' : '🔍 Find Available Spots'}
+            {filterLoading ? 'Searching...' : <><IconSearch size={16} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Find Available Spots</>}
           </button>
           {spotsLoaded && (
             <p style={{ marginTop: 12, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              ✅ Showing {spots.length} spot(s) available for your selected window.
+              <IconCheckCircle size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Showing {spots.length} spot(s) available for your selected window.
               {spots.length === 0 && ' Try a different time range.'}
             </p>
           )}
@@ -354,28 +366,35 @@ export default function LotDetail() {
           <div className="spot-legend mb-3">
             {bookingMode === 'PRE_BOOKING' ? (
               <div className="spot-legend-item">
-                <div className="spot-legend-dot" style={{ background: '#dcfce7' }} />
+                <div className="spot-legend-dot available" />
                 Available for your window (click to select)
               </div>
             ) : (
               <>
                 <div className="spot-legend-item">
-                  <div className="spot-legend-dot" style={{ background: '#dcfce7' }} />Free
+                  <div className="spot-legend-dot available" />Free
                 </div>
                 <div className="spot-legend-item">
-                  <div className="spot-legend-dot" style={{ background: '#fef3c7', border: '1px solid #f59e0b' }} />
+                  <div className="spot-legend-dot reserved-available" />
                   Reserved (available until reservation starts)
                 </div>
                 <div className="spot-legend-item">
-                  <div className="spot-legend-dot" style={{ background: '#fee2e2' }} />Occupied
+                  <div className="spot-legend-dot occupied" />Occupied
                 </div>
               </>
             )}
             {selected && (
               <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
-                <strong>✓ {selected.spotNumber} — ₹{selected.pricePerHour}/hr</strong>
+                <strong><IconCheckCircle size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> {selected.spotNumber} — ₹{selected.pricePerHour}/hr</strong>
                 <button className="btn btn-primary btn-sm"
-                  onClick={() => { setError(''); setShowModal(true); }}>
+                  onClick={() => {
+                    setError('');
+                    setForm(prev => ({
+                      ...prev,
+                      endTime: bookingMode === 'PRE_BOOKING' ? filterEnd : ''
+                    }));
+                    setShowModal(true);
+                  }}>
                   Book This Spot
                 </button>
               </div>
@@ -395,7 +414,7 @@ export default function LotDetail() {
               </div>
               <div className="spot-grid">
                 {floorSpots.map(spot => {
-                  const tileClass  = getTileClass(spot);
+                  const tileClass = getTileClass(spot);
                   const selectable = bookingMode === 'PRE_BOOKING' ? true : spot.selectable;
                   return (
                     <div
@@ -408,7 +427,7 @@ export default function LotDetail() {
                     >
                       <div className="spot-num">{spot.spotNumber}</div>
                       <div className="spot-type">
-                        {spot.isEVCharging ? '⚡' : spot.isHandicapped ? '♿' : spot.spotType}
+                        {spot.spotType === 'EV' ? <>EV STANDARD</> : spot.spotType}
                       </div>
                       {/* Drive-in "Available until" label on reserved-available tiles */}
                       {bookingMode === 'DRIVE_IN' && spot.status === 'RESERVED_AVAILABLE' && (
@@ -426,7 +445,7 @@ export default function LotDetail() {
       {/* Spot grid empty state */}
       {spotsLoaded && spots.length === 0 && (
         <div className="card flex-center" style={{ padding: 48, flexDirection: 'column', gap: 12 }}>
-          <div style={{ fontSize: '2.5rem' }}>🚫</div>
+          <div style={{ fontSize: '2.5rem' }}><IconStop size={48} /></div>
           <h3>No available spots</h3>
           <p>
             {bookingMode === 'PRE_BOOKING'
@@ -448,7 +467,7 @@ export default function LotDetail() {
               Cancel
             </button>
             <button className="btn btn-primary" onClick={handleBook} disabled={bookingLoading}>
-              {bookingLoading ? 'Booking...' : bookingMode === 'DRIVE_IN' ? '🚗 Drive In' : '📅 Confirm Reservation'}
+              {bookingLoading ? 'Booking...' : bookingMode === 'DRIVE_IN' ? <><IconCar size={16} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Drive In</> : <><IconCalendar size={16} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Confirm Reservation</>}
             </button>
           </>
         }
@@ -456,7 +475,7 @@ export default function LotDetail() {
         {/* Mode badge */}
         <div style={{ marginBottom: 16 }}>
           <span className={`badge ${bookingMode === 'DRIVE_IN' ? 'badge-success' : 'badge-primary'}`}>
-            {bookingMode === 'DRIVE_IN' ? '🚗 Drive-In — Instant Check-in' : '📅 Pre-Booking — Reserve Ahead'}
+            {bookingMode === 'DRIVE_IN' ? <><IconCar size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Drive-In — Instant Check-in</> : <><IconCalendar size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Pre-Booking — Reserve Ahead</>}
           </span>
         </div>
 
@@ -465,27 +484,28 @@ export default function LotDetail() {
           <div className="alert alert-info mb-3">
             <div className="flex-between">
               <span>
-                🅿 <strong>{selected.spotNumber}</strong> — {selected.spotType}
-                {selected.isEVCharging && ' ⚡'}{selected.isHandicapped && ' ♿'}
+                <IconParking size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> <strong>{selected.spotNumber}</strong> — {selected.spotType === 'EV' ? 'EV STANDARD' : selected.spotType}
+                {selected.isEVCharging && <><IconEV size={12} style={{ marginLeft: 4 }} /></>}
               </span>
               <strong>₹{selected.pricePerHour}/hr</strong>
             </div>
             {/* Warning for RESERVED_AVAILABLE in drive-in */}
             {bookingMode === 'DRIVE_IN' && selected.status === 'RESERVED_AVAILABLE' && (
               <div style={{ marginTop: 8, fontSize: '0.82rem', color: '#b45309' }}>
-                ⚠ {selected.availabilityLabel}. Set your departure time before this.
+                <IconAlertTriangle size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> {selected.availabilityLabel}. Set your departure time before this.
               </div>
             )}
             {/* PRE_BOOKING: show chosen window */}
             {bookingMode === 'PRE_BOOKING' && filterStart && (
               <div style={{ marginTop: 6, fontSize: '0.82rem' }}>
-                🕐 {new Date(toISO(filterStart)).toLocaleString()} →
+                <IconClock size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> {new Date(toISO(filterStart)).toLocaleString()} →
                 {form.endTime ? new Date(toISO(form.endTime)).toLocaleString() : '…'}
               </div>
             )}
             {getEstimate() && (
               <div style={{ marginTop: 6, fontSize: '0.85rem' }}>
-                💰 Estimated fare: <strong>₹{getEstimate()}</strong>
+                <IconReceipt size={14} style={{ verticalAlign: '-2px', marginRight: 4, color: 'var(--success)' }} /> 
+                Estimated fare: <strong>₹{getEstimate()}</strong>
                 <span style={{ opacity: 0.7 }}> (min. 1hr charge applies)</span>
               </div>
             )}
@@ -517,9 +537,9 @@ export default function LotDetail() {
           <div className="form-group">
             <label className="form-label">Booking Window</label>
             <div className="alert alert-info" style={{ padding: '8px 12px', fontSize: '0.85rem' }}>
-              📅 {filterStart ? new Date(toISO(filterStart)).toLocaleString() : '—'}
+              <IconCalendar size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> {filterStart ? new Date(toISO(filterStart)).toLocaleString() : '—'}
               &nbsp;→&nbsp;
-              {filterEnd  ? new Date(toISO(filterEnd)).toLocaleString() : '—'}
+              {filterEnd ? new Date(toISO(filterEnd)).toLocaleString() : '—'}
             </div>
           </div>
         )}
@@ -552,8 +572,9 @@ export default function LotDetail() {
             <label className="form-label">End Time (from your filter)</label>
             <input
               className="form-control" type="datetime-local"
-              value={form.endTime || filterEnd}
+              value={form.endTime}
               min={filterStart || new Date().toISOString().slice(0, 16)}
+              max={filterEnd || ''}
               onChange={e => setForm({ ...form, endTime: e.target.value })}
             />
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>

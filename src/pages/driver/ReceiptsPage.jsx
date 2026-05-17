@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import DriverLayout from '../../components/driver/DriverLayout';
 import { Spinner, Alert, EmptyState, StatusBadge } from '../../components/common/UI';
+import { IconReceipt, IconClock, IconDownload } from '../../components/common/Icons';
 import { api, GATEWAY_URL, getToken } from '../../utils/api';
 
 export default function ReceiptsPage() {
@@ -47,7 +48,7 @@ export default function ReceiptsPage() {
   return (
     <DriverLayout title="My Receipts">
       <div className="page-header">
-        <h1>My Receipts 🧾</h1>
+        <h1>My Receipts <IconReceipt size={28} style={{ verticalAlign: '-4px' }} /></h1>
         <p>Download PDF receipts for all your completed payments.</p>
       </div>
 
@@ -55,7 +56,7 @@ export default function ReceiptsPage() {
 
       {loading ? <Spinner /> : payments.length === 0 ? (
         <EmptyState
-          icon="🧾"
+          icon={<IconReceipt size={48} />}
           title="No receipts yet"
           message="Receipts appear here after a completed payment."
         />
@@ -64,10 +65,10 @@ export default function ReceiptsPage() {
           {payments.map(p => (
             <div key={p.paymentId} className="receipt-card">
               <div className="receipt-card-left">
-                <div className="receipt-icon">🧾</div>
+                <div className="receipt-icon"><IconReceipt size={24} /></div>
                 <div className="receipt-info">
                   <div className="receipt-title">
-                    Booking #{p.bookingId}
+                    {p.subscriptionId ? `Subscription #${p.subscriptionId}` : `Booking #${p.bookingId}`}
                   </div>
                   <div className="receipt-meta">
                     Payment #{p.paymentId}
@@ -89,7 +90,7 @@ export default function ReceiptsPage() {
                   onClick={() => downloadReceipt(p.paymentId)}
                   disabled={downloading === p.paymentId}
                 >
-                  {downloading === p.paymentId ? '⏳ Downloading...' : '⬇ Download PDF'}
+                  {downloading === p.paymentId ? <><IconClock size={14} className="spin" style={{ marginRight: 4 }} /> Downloading...</> : <><IconDownload size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Download PDF</>}
                 </button>
               </div>
             </div>

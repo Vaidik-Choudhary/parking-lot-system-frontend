@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import GuestLayout from '../../components/guest/GuestLayout';
 import { Spinner, Alert } from '../../components/common/UI';
+import { IconMap, IconParking, IconClock, IconRefresh, IconEV, IconHandicap, IconCheck } from '../../components/common/Icons';
 import { api } from '../../utils/api';
 
 export default function GuestLotDetail() {
@@ -36,7 +37,7 @@ export default function GuestLotDetail() {
     sessionStorage.setItem('redirectAfterLogin', `/driver/lots/${lotId}`);
     navigate('/login', {
       state: {
-        message: '👋 Please sign in or create a free account to book this spot.',
+        message: 'Please sign in or create a free account to book this spot.',
         lotId,
       }
     });
@@ -76,15 +77,16 @@ export default function GuestLotDetail() {
           <div className="flex-between mb-3">
             <div>
               <h2>{lot?.name}</h2>
-              <p>📍 {lot?.address}, {lot?.city}</p>
+              <p><IconMap size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> {lot?.address}, {lot?.city}</p>
             </div>
             <span className={`badge ${lot?.open ? 'badge-success' : 'badge-danger'}`}>
               {lot?.open ? '● Open' : '● Closed'}
             </span>
           </div>
           <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-            <div className="lot-meta-item">🅿 {available} available of {spots.length}</div>
-            <div className="lot-meta-item">🕐 {lot?.openTime} – {lot?.closeTime}</div>
+            <div className="lot-meta-item"><IconParking size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> {available} available of {spots.length}</div>
+            <div className="lot-meta-item"><IconClock size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> {lot?.openTime} – {lot?.closeTime}</div>
+            {lot?.isHandicappedFriendly && <div className="lot-meta-item" style={{ color: 'var(--info)', fontWeight: 500 }}><IconHandicap size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Handicapped Friendly</div>}
           </div>
         </div>
 
@@ -93,7 +95,7 @@ export default function GuestLotDetail() {
           <div className="guest-book-banner-text">
             <div className="guest-book-banner-title">
               {selected
-                ? `✓ Spot ${selected.spotNumber} selected — ₹${selected.pricePerHour}/hr`
+                ? <><IconCheck size={16} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Spot {selected.spotNumber} selected — ₹{selected.pricePerHour}/hr</>
                 : '👆 Select an available spot below to book it'}
             </div>
             <div className="guest-book-banner-sub">
@@ -129,7 +131,7 @@ export default function GuestLotDetail() {
             style={{ marginLeft: 'auto' }}
             onClick={loadSpots}
           >
-            🔄 Refresh
+            <IconRefresh size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Refresh
           </button>
         </div>
 
@@ -159,7 +161,7 @@ export default function GuestLotDetail() {
                   >
                     <div className="spot-num">{spot.spotNumber}</div>
                     <div className="spot-type">
-                      {spot.isEVCharging ? '⚡' : spot.isHandicapped ? '♿' : spot.spotType}
+                      {spot.spotType === 'EV' ? <><IconEV size={12} /> EV STANDARD</> : spot.spotType}
                     </div>
                   </div>
                 );

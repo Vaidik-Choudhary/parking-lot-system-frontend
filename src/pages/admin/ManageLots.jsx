@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { Spinner, Alert, EmptyState } from '../../components/common/UI';
+import { IconCheckCircle, IconClock, IconX } from '../../components/common/Icons';
 import { api } from '../../utils/api';
 
 export default function ManageLots() {
@@ -40,7 +41,7 @@ export default function ManageLots() {
       <td>{lot.totalSpots}</td>
       <td>
         <span className={`badge ${lot.approved ? 'badge-success' : 'badge-warning'}`}>
-          {lot.approved ? '✓ Approved' : '⏳ Pending'}
+          {lot.approved ? <><IconCheckCircle size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Approved</> : <><IconClock size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Pending</>}
         </span>
       </td>
       <td>
@@ -51,8 +52,8 @@ export default function ManageLots() {
       {showActions && (
         <td>
           <div style={{ display: 'flex', gap: 6 }}>
-            <button className="btn btn-success btn-sm" onClick={() => approve(lot.lotId)}>✓ Approve</button>
-            <button className="btn btn-danger btn-sm"  onClick={() => reject(lot.lotId)}>✕ Reject</button>
+            <button className="btn btn-success btn-sm" onClick={() => approve(lot.lotId)}><IconCheckCircle size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Approve</button>
+            <button className="btn btn-danger btn-sm"  onClick={() => reject(lot.lotId)}><IconX size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Reject</button>
           </div>
         </td>
       )}
@@ -82,7 +83,7 @@ export default function ManageLots() {
         <div className="card">
           {tab === 'pending' ? (
             pending.length === 0 ? (
-              <EmptyState icon="✅" title="No pending lots" message="All lot registrations have been reviewed." />
+              <EmptyState icon={<IconCheckCircle size={48} />} title="No pending lots" message="All lot registrations have been reviewed." />
             ) : (
               <div className="table-wrapper">
                 <table>

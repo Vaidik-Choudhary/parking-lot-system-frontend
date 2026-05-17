@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ManagerLayout from '../../components/manager/ManagerLayout';
 import { Spinner, Alert, EmptyState, StatusBadge } from '../../components/common/UI';
+import { IconCar, IconCalendar, IconRefresh, IconArrowLeft, IconParking, IconBooking } from '../../components/common/Icons';
 import { api } from '../../utils/api';
 
 /**
@@ -68,8 +69,8 @@ export default function LotBookings() {
   };
 
   const tabLabels = {
-    ACTIVE:    '🚗 Active',
-    UPCOMING:  '📅 Upcoming',
+    ACTIVE:    <><IconCar size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Active</>,
+    UPCOMING:  <><IconCalendar size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Upcoming</>,
     ALL:       'All',
     RESERVED:  'Reserved',
     COMPLETED: 'Completed',
@@ -84,8 +85,8 @@ export default function LotBookings() {
     <ManagerLayout title="Lot Bookings"
       topbarRight={
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-secondary btn-sm" onClick={load}>🔄 Refresh</button>
-          <button className="btn btn-secondary btn-sm" onClick={() => navigate(-1)}>← Back</button>
+          <button className="btn btn-secondary btn-sm" onClick={load}><IconRefresh size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Refresh</button>
+          <button className="btn btn-secondary btn-sm" onClick={() => navigate(-1)}><IconArrowLeft size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Back</button>
         </div>
       }
     >
@@ -99,12 +100,12 @@ export default function LotBookings() {
       {/* ── Context banners ───────────────────────────────────────────────── */}
       {tab === 'ACTIVE' && (
         <div className="alert alert-success mb-3" style={{ fontSize: '0.85rem' }}>
-          🟢 <strong>Active Bookings</strong> — Drivers currently parked (status = ACTIVE, checked in now).
+          <strong>Active Bookings</strong> — Drivers currently parked (status = ACTIVE, checked in now).
         </div>
       )}
       {tab === 'UPCOMING' && (
         <div className="alert alert-info mb-3" style={{ fontSize: '0.85rem' }}>
-          🔵 <strong>Upcoming Reservations</strong> — Pre-bookings with startTime in the future (status = RESERVED).
+          <strong>Upcoming Reservations</strong> — Pre-bookings with startTime in the future (status = RESERVED).
         </div>
       )}
 
@@ -124,7 +125,7 @@ export default function LotBookings() {
 
       {loading ? <Spinner /> : displayed.length === 0 ? (
         <EmptyState
-          icon={tab === 'ACTIVE' ? '🅿' : tab === 'UPCOMING' ? '📅' : '📋'}
+          icon={tab === 'ACTIVE' ? <IconParking size={48} /> : tab === 'UPCOMING' ? <IconCalendar size={48} /> : <IconBooking size={48} />}
           title="No bookings found"
           message={
             tab === 'ACTIVE'   ? 'No drivers currently parked.' :
@@ -160,7 +161,7 @@ export default function LotBookings() {
                     <td>{b.vehiclePlate}</td>
                     <td>
                       <span className={`badge ${b.bookingType === 'DRIVE_IN' ? 'badge-success' : 'badge-primary'}`}>
-                        {b.bookingType === 'DRIVE_IN' ? '🚗 Drive-In' : '📅 Pre-Booking'}
+                        {b.bookingType === 'DRIVE_IN' ? <><IconCar size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Drive-In</> : <><IconCalendar size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} /> Pre-Booking</>}
                       </span>
                     </td>
                     <td style={{ fontSize: '0.8rem' }}>{fmt(b.startTime)}</td>

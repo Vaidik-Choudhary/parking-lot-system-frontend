@@ -4,7 +4,7 @@
 //  Change GATEWAY_URL to match your gateway port
 // =====================================================
 
-export const GATEWAY_URL = 'http://localhost:8080';
+export const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || '';
 
 // ── Token helpers ─────────────────────────────────────
 export const getToken    = () => localStorage.getItem('accessToken');
@@ -63,6 +63,7 @@ export const api = {
   get:    (path)         => apiFetch(path),
   post:   (path, body)   => apiFetch(path, { method: 'POST',   body: JSON.stringify(body) }),
   put:    (path, body)   => apiFetch(path, { method: 'PUT',    body: JSON.stringify(body) }),
+  patch:  (path, body)   => apiFetch(path, { method: 'PATCH',  body: JSON.stringify(body) }),
   delete: (path)         => apiFetch(path, { method: 'DELETE' }),
   // For file downloads
   download: (path) => apiFetch(path, { raw: true }),
